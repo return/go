@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build aix || (solaris && !illumos)
+//go:build aix || (solaris && !illumos) || haiku
 
 // This code implements the filelock API using POSIX 'fcntl' locks, which attach
 // to an (inode, process) pair rather than a file descriptor. To avoid unlocking
@@ -32,7 +32,7 @@ const (
 	writeLock lockType = syscall.F_WRLCK
 )
 
-type inode = uint64 // type of syscall.Stat_t.Ino
+// type inode = uint64 // type of syscall.Stat_t.Ino
 
 type inodeLock struct {
 	owner File

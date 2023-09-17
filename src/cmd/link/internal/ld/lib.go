@@ -184,6 +184,7 @@ type Arch struct {
 	Androiddynld   string
 	Linuxdynld     string
 	Freebsddynld   string
+	Haikudynld     string
 	Netbsddynld    string
 	Openbsddynld   string
 	Dragonflydynld string
@@ -768,7 +769,7 @@ func (ctxt *Link) linksetup() {
 	// Also leave it enabled on Solaris which doesn't support
 	// statically linked binaries.
 	if ctxt.BuildMode == BuildModeExe {
-		if havedynamic == 0 && ctxt.HeadType != objabi.Hdarwin && ctxt.HeadType != objabi.Hsolaris {
+		if havedynamic == 0 && ctxt.HeadType != objabi.Hdarwin && ctxt.HeadType != objabi.Hsolaris && ctxt.HeadType != objabi.Hhaiku {
 			*FlagD = true
 		}
 	}
@@ -1337,6 +1338,12 @@ func (ctxt *Link) hostlink() {
 		if !combineDwarf {
 			argv = append(argv, "-Wl,-S") // suppress STAB (symbolic debugging) symbols
 		}
+	case objabi.Hhaiku:
+		//argv = append(argv, "-lbsd")
+		argv = append(argv, "-lnetwork")
+		argv = append(argv, "-lroot")
+		argv = append(argv, "-lgcc_s")
+		argv = append(argv, "-fPIC")
 	case objabi.Hopenbsd:
 		argv = append(argv, "-Wl,-nopie")
 		argv = append(argv, "-pthread")

@@ -66,6 +66,7 @@ func Init() (*sys.Arch, ld.Arch) {
 
 		Linuxdynld:     "/lib64/ld-linux-x86-64.so.2",
 		Freebsddynld:   "/libexec/ld-elf.so.1",
+		Haikudynld:     "/system/runtime_loader",
 		Openbsddynld:   "/usr/libexec/ld.so",
 		Netbsddynld:    "/libexec/ld.elf_so",
 		Dragonflydynld: "/usr/libexec/ld-elf.so.2",
@@ -101,6 +102,7 @@ func archinit(ctxt *ld.Link) {
 
 	case objabi.Hlinux, /* elf64 executable */
 		objabi.Hfreebsd,   /* freebsd */
+		objabi.Hhaiku,     /* haiku */
 		objabi.Hnetbsd,    /* netbsd */
 		objabi.Hopenbsd,   /* openbsd */
 		objabi.Hdragonfly, /* dragonfly */

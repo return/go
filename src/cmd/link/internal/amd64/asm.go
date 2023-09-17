@@ -266,7 +266,7 @@ func adddynrel(target *ld.Target, ldr *loader.Loader, syms *ld.ArchSyms, s loade
 	case objabi.R_ADDR:
 		if ldr.SymType(s) == sym.STEXT && target.IsElf() {
 			su := ldr.MakeSymbolUpdater(s)
-			if target.IsSolaris() {
+			if target.IsSolaris() || target.IsHaiku() {
 				addpltsym(target, ldr, syms, targ)
 				su.SetRelocSym(rIdx, syms.PLT)
 				su.SetRelocAdd(rIdx, r.Add()+int64(ldr.SymPlt(targ)))
