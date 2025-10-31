@@ -66,6 +66,7 @@ const (
 	sizeofInt      = C.sizeof_int
 	sizeofLong     = C.sizeof_long
 	sizeofLongLong = C.sizeof_longlong
+	PathMax        = C.PATH_MAX
 )
 
 // Basic types
@@ -160,6 +161,12 @@ const (
 // Select
 
 type FdSet C.fd_set
+
+// Misc
+
+const (
+	_AT_FDCWD = C.AT_FDCWD
+)
 
 // Terminal handling
 

@@ -11,6 +11,7 @@ const (
 	sizeofInt      = 0x4
 	sizeofLong     = 0x8
 	sizeofLongLong = 0x8
+	PathMax        = 0x400
 )
 
 type (
@@ -198,6 +199,10 @@ const (
 type FdSet struct {
 	Bits [32]uint32
 }
+
+const (
+	_AT_FDCWD = -100
+)
 
 type Termios struct {
 	Iflag     uint32

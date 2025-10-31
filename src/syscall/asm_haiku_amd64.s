@@ -17,15 +17,6 @@ TEXT ·rawSysvicall6(SB),NOSPLIT,$0
 TEXT ·chdir(SB),NOSPLIT,$0
 	JMP	runtime·syscall_chdir(SB)
 
-TEXT ·dlopen(SB),NOSPLIT,$0
-	JMP	runtime·syscall_dlopen(SB)
-
-TEXT ·dlclose(SB),NOSPLIT,$0
-	JMP	runtime·syscall_dlclose(SB)
-
-TEXT ·dlsym(SB),NOSPLIT,$0
-	JMP	runtime·syscall_dlsym(SB)
-
 TEXT ·chroot1(SB),NOSPLIT,$0
 	JMP	runtime·syscall_chroot(SB)
 

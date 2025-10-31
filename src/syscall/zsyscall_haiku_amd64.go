@@ -7,6 +7,7 @@ package syscall
 
 import "unsafe"
 
+//go:cgo_import_dynamic libc_Getcwd getcwd "libroot.so"
 //go:cgo_import_dynamic libc_getgroups getgroups "libroot.so"
 //go:cgo_import_dynamic libc_setgroups setgroups "libroot.so"
 //go:cgo_import_dynamic libc_fcntl fcntl "libroot.so"
@@ -22,13 +23,12 @@ import "unsafe"
 //go:cgo_import_dynamic libc_Closedir closedir "libroot.so"
 //go:cgo_import_dynamic libc_Dup dup "libroot.so"
 //go:cgo_import_dynamic libc_Dup2 dup2 "libroot.so"
-//go:cgo_import_dynamic libc_Exit exit "libroot.so"
 //go:cgo_import_dynamic libc_Fchdir fchdir "libroot.so"
 //go:cgo_import_dynamic libc_Fchmod fchmod "libroot.so"
 //go:cgo_import_dynamic libc_Fchown fchown "libroot.so"
 //go:cgo_import_dynamic libc_Fdopendir fdopendir "libroot.so"
 //go:cgo_import_dynamic libc_Fpathconf fpathconf "libroot.so"
-//go:cgo_import_dynamic libc_Fstat fstat "libroot.so"
+//go:cgo_import_dynamic libc_Fstat fstat#LIBROOT_1_ALPHA1 "libroot.so"
 //go:cgo_import_dynamic libc_Getgid getgid "libroot.so"
 //go:cgo_import_dynamic libc_Getpid getpid "libroot.so"
 //go:cgo_import_dynamic libc_Geteuid geteuid "libroot.so"
@@ -42,7 +42,7 @@ import "unsafe"
 //go:cgo_import_dynamic libc_Lchown lchown "libroot.so"
 //go:cgo_import_dynamic libc_Link link "libroot.so"
 //go:cgo_import_dynamic libc_listen listen "libnetwork.so"
-//go:cgo_import_dynamic libc_Lstat lstat "libroot.so"
+//go:cgo_import_dynamic libc_Lstat lstat#LIBROOT_1_ALPHA1 "libroot.so"
 //go:cgo_import_dynamic libc_Mkdir mkdir "libroot.so"
 //go:cgo_import_dynamic libc_Mknod mknod "libroot.so"
 //go:cgo_import_dynamic libc_Nanosleep nanosleep "libroot.so"
@@ -68,7 +68,7 @@ import "unsafe"
 //go:cgo_import_dynamic libc_Setsid setsid "libroot.so"
 //go:cgo_import_dynamic libc_Setuid setuid "libroot.so"
 //go:cgo_import_dynamic libc_shutdown shutdown "libnetwork.so"
-//go:cgo_import_dynamic libc_Stat stat "libroot.so"
+//go:cgo_import_dynamic libc_Stat stat#LIBROOT_1_ALPHA1 "libroot.so"
 //go:cgo_import_dynamic libc_Symlink symlink "libroot.so"
 //go:cgo_import_dynamic libc_Sync sync "libroot.so"
 //go:cgo_import_dynamic libc_Truncate truncate "libroot.so"
@@ -91,7 +91,9 @@ import "unsafe"
 //go:cgo_import_dynamic libc_setsockopt setsockopt "libnetwork.so"
 //go:cgo_import_dynamic libc_recvfrom recvfrom "libnetwork.so"
 //go:cgo_import_dynamic libc_recvmsg recvmsg "libnetwork.so"
+//go:cgo_import_dynamic libc_utimensat utimensat "libroot.so"
 
+//go:linkname libc_Getcwd libc_Getcwd
 //go:linkname libc_getgroups libc_getgroups
 //go:linkname libc_setgroups libc_setgroups
 //go:linkname libc_fcntl libc_fcntl
@@ -107,7 +109,6 @@ import "unsafe"
 //go:linkname libc_Closedir libc_Closedir
 //go:linkname libc_Dup libc_Dup
 //go:linkname libc_Dup2 libc_Dup2
-//go:linkname libc_Exit libc_Exit
 //go:linkname libc_Fchdir libc_Fchdir
 //go:linkname libc_Fchmod libc_Fchmod
 //go:linkname libc_Fchown libc_Fchown
@@ -176,10 +177,12 @@ import "unsafe"
 //go:linkname libc_setsockopt libc_setsockopt
 //go:linkname libc_recvfrom libc_recvfrom
 //go:linkname libc_recvmsg libc_recvmsg
+//go:linkname libc_utimensat libc_utimensat
 
 type libcFunc uintptr
 
 var (
+	libc_Getcwd,
 	libc_getgroups,
 	libc_setgroups,
 	libc_fcntl,
@@ -195,7 +198,6 @@ var (
 	libc_Closedir,
 	libc_Dup,
 	libc_Dup2,
-	libc_Exit,
 	libc_Fchdir,
 	libc_Fchmod,
 	libc_Fchown,
@@ -263,8 +265,22 @@ var (
 	libc_getsockname,
 	libc_setsockopt,
 	libc_recvfrom,
-	libc_recvmsg libcFunc
+	libc_recvmsg,
+	libc_utimensat libcFunc
 )
+
+func Getcwd(buf []byte) (n int, err error) {
+	var _p0 *byte
+	if len(buf) > 0 {
+		_p0 = &buf[0]
+	}
+	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Getcwd)), 2, uintptr(unsafe.Pointer(_p0)), uintptr(len(buf)), 0, 0, 0, 0)
+	n = int(r0)
+	if e1 != 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
 
 func getgroups(ngid int, gid *_Gid_t) (n int, err error) {
 	r0, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_getgroups)), 2, uintptr(ngid), uintptr(unsafe.Pointer(gid)), 0, 0, 0, 0)
@@ -943,7 +959,7 @@ func Unlink(path string) (err error) {
 	return
 }
 
-func Utimes(path string, times *[2]Timeval) (err error) {
+func utimes(path string, times *[2]Timeval) (err error) {
 	var _p0 *byte
 	_p0, err = BytePtrFromString(path)
 	if err != nil {
@@ -1079,6 +1095,19 @@ func recvfrom(fd int, p []byte, flags int, from *RawSockaddrAny, fromlen *_Sockl
 func recvmsg(s int, msg *Msghdr, flags int) (n int, err error) {
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_recvmsg)), 3, uintptr(s), uintptr(unsafe.Pointer(msg)), uintptr(flags), 0, 0, 0)
 	n = int(r0)
+	if e1 != 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+func utimensat(dirfd int, path string, times *[2]Timespec, flag int) (err error) {
+	var _p0 *byte
+	_p0, err = BytePtrFromString(path)
+	if err != nil {
+		return
+	}
+	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_utimensat)), 4, uintptr(dirfd), uintptr(unsafe.Pointer(_p0)), uintptr(unsafe.Pointer(times)), uintptr(flag), 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
 	}
