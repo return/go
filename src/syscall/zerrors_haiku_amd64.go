@@ -200,6 +200,7 @@ const (
 	MAP_PRIVATE               = 0x2
 	MAP_SHARED                = 0x1
 	MSG_BCAST                 = 0x100
+	MSG_CMSG_CLOEXEC          = 0x1000
 	MSG_CTRUNC                = 0x20
 	MSG_DONTROUTE             = 0x4
 	MSG_DONTWAIT              = 0x80

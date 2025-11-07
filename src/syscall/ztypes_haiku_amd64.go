@@ -161,7 +161,7 @@ type Msghdr struct {
 	Iov        *Iovec
 	Iovlen     int32
 	Pad_cgo_1  [4]byte
-	Control    *byte
+	Control    *int8
 	Controllen uint32
 	Flags      int32
 }

@@ -357,28 +357,29 @@ func Accept(fd int) (nfd int, sa Sockaddr, err error) {
 
 func recvmsgRaw(fd int, p, oob []byte, flags int, rsa *RawSockaddrAny) (n, oobn int, recvflags int, err error) {
 	var msg Msghdr
-	msg.Name = (*byte)(unsafe.Pointer(rsa)) // Hack types (*byte) to build on Haiku
+	msg.Name = (*byte)(unsafe.Pointer(rsa))
 	msg.Namelen = uint32(SizeofSockaddrAny)
 	var iov Iovec
 	if len(p) > 0 {
-		iov.Base = (*byte)(unsafe.Pointer(&p[0])) // Hack types (*byte) to build on Haiku
+		iov.Base = (*byte)(unsafe.Pointer(&p[0]))
 		iov.SetLen(len(p))
 	}
-	var dummy byte // Hack types (*byte) to build on Haiku
+	var dummy byte
 	if len(oob) > 0 {
 		// receive at least one normal byte
 		if len(p) == 0 {
 			iov.Base = &dummy
 			iov.SetLen(1)
 		}
-		//msg.Accrights = (*int8)(unsafe.Pointer(&oob[0]))
+		msg.Control = (*int8)(unsafe.Pointer(&oob[0]))
+		msg.Controllen = uint32(len(oob))
 	}
 	msg.Iov = &iov
 	msg.Iovlen = 1
 	if n, err = recvmsg(fd, &msg, flags); err != nil {
 		return
 	}
-	oobn = 0 //int(msg.Accrightslen)
+	oobn = int(msg.Controllen)
 	return
 }
 
@@ -390,17 +391,18 @@ func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags i
 	msg.Namelen = uint32(salen)
 	var iov Iovec
 	if len(p) > 0 {
-		iov.Base = (*byte)(unsafe.Pointer(&p[0])) // Changed int8 to byte to build on Haiku
+		iov.Base = (*byte)(unsafe.Pointer(&p[0]))
 		iov.SetLen(len(p))
 	}
-	var dummy byte // Changed int8 to byte to build on Haiku
+	var dummy byte
 	if len(oob) > 0 {
 		// send at least one normal byte
 		if len(p) == 0 {
 			iov.Base = &dummy
 			iov.SetLen(1)
 		}
-		//msg.Accrights = (*int8)(unsafe.Pointer(&oob[0]))
+		msg.Control = (*int8)(unsafe.Pointer(&oob[0]))
+		msg.Controllen = uint32(len(oob))
 	}
 	msg.Iov = &iov
 	msg.Iovlen = 1
