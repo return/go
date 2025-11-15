@@ -29,26 +29,6 @@ TEXT runtime·miniterrno(SB),NOSPLIT,$0
 	MOVQ	AX,	(m_mOS+mOS_perrno)(BX)
 	RET
 
-// int64 runtime·nanotime2(void);
-//
-// clock_gettime(3c) wrapper because Timespec is too large for
-// runtime·nanotime stack.
-//
-// Called using runtime·sysvicall6 from os_solaris.c:/nanotime.
-// NOT USING GO CALLING CONVENTION.
-TEXT runtime·nanotime2(SB),NOSPLIT,$0
-	// need space for the timespec argument.
-	SUBQ	$64, SP	// 16 bytes will do, but who knows in the future?
-	MOVQ	$-1, DI	// CLOCK_REALTIME from <time.h>
-	MOVQ	SP, SI
-	LEAQ	libc_clock_gettime(SB), AX
-	CALL	AX
-	MOVQ	(SP), AX	// tv_sec from struct timespec
-	IMULQ	$1000000000, AX	// multiply into nanoseconds
-	ADDQ	8(SP), AX	// tv_nsec, offset should be stable.
-	ADDQ	$64, SP
-	RET
-
 // pipe(3c) wrapper that returns fds in AX, DX.
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·pipe1(SB),NOSPLIT,$0

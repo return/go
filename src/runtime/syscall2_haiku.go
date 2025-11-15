@@ -15,7 +15,6 @@ import _ "unsafe" // for go:linkname
 //go:cgo_import_dynamic libc_gethostname gethostname "libroot.so"
 //go:cgo_import_dynamic libc_getpid getpid "libroot.so"
 //go:cgo_import_dynamic libc_ioctl ioctl "libroot.so"
-//go:cgo_import_dynamic libc_pipe pipe "libroot.so"
 //go:cgo_import_dynamic libc_setgid setgid "libroot.so"
 //go:cgo_import_dynamic libc_setgroups setgroups "libroot.so"
 //go:cgo_import_dynamic libc_setsid setsid "libroot.so"
@@ -34,7 +33,6 @@ import _ "unsafe" // for go:linkname
 //go:linkname libc_gethostname libc_gethostname
 //go:linkname libc_getpid libc_getpid
 //go:linkname libc_ioctl libc_ioctl
-//go:linkname libc_pipe libc_pipe
 //go:linkname libc_setgid libc_setgid
 //go:linkname libc_setgroups libc_setgroups
 //go:linkname libc_setsid libc_setsid

@@ -51,6 +51,8 @@ import (
 //go:cgo_import_dynamic libc_sysconf sysconf#LIBROOT_1_ALPHA4 "libroot.so"
 //go:cgo_import_dynamic libc_usleep usleep "libroot.so"
 //go:cgo_import_dynamic libc_write write "libroot.so"
+//go:cgo_import_dynamic libc_pipe pipe "libroot.so"
+//go:cgo_import_dynamic libc_pipe2 pipe2 "libroot.so"
 //go:cgo_import_dynamic libc_area_for area_for "libroot.so"
 
 //go:linkname libc__errnop libc__errnop
@@ -87,6 +89,8 @@ import (
 //go:linkname libc_sysconf libc_sysconf
 //go:linkname libc_usleep libc_usleep
 //go:linkname libc_write libc_write
+//go:linkname libc_pipe libc_pipe
+//go:linkname libc_pipe2 libc_pipe2
 //go:linkname libc_area_for libc_area_for
 
 var (
@@ -124,15 +128,17 @@ var (
 	libc_sysconf,
 	libc_usleep,
 	libc_write,
-	libc_area_for libcFunc
+	libc_area_for,
+	libc_pipe,
+	libc_pipe2 libcFunc
 )
 
 const (
 	_CLOCK_REALTIME  = 0xffffffff
+	_CLOCK_MONOTONIC = 0
 )
 
-
-var sigset_all = sigset(0)
+var sigset_all = ^sigset(0)
 var sigset_none = sigset(0)
 
 func getncpu() int32 {
@@ -224,13 +230,14 @@ func setSignalstackSP(s *stackt, sp uintptr) {
 //go:nosplit
 //go:nowritebarrierrec
 func sigaddset(mask *sigset, i int) {
-	//mask.sa_mask.__sigbits[(i-1)/32] |= 1 << ((uint32(i) - 1) & 31)
+	*mask |= 1 << (sigset(i) - 1)
 }
 
 func sigdelset(mask *sigset, i int) {
-	//mask.sa_mask.__sigbits[(i-1)/32] &^= 1 << ((uint32(i) - 1) & 31)
+	*mask &^= 1 << (sigset(i) - 1)
 }
 
+//go:nosplit
 func (c *sigctxt) fixsigcode(sig uint32) {
 }
 
@@ -264,13 +271,12 @@ func setsig(i uint32, fn uintptr) {
 
 	sa.sa_flags = _SA_SIGINFO | _SA_ONSTACK | _SA_RESTART
 	sa.sa_mask = sigset_all
-	if fn == abi.FuncPCABIInternal(sighandler) {
+	if fn == abi.FuncPCABIInternal(sighandler) { // abi.FuncPCABIInternal(sighandler) matches the callers in signal_unix.go
 		fn = abi.FuncPCABI0(sigtramp)
 	}
 	*((*uintptr)(unsafe.Pointer(&sa._funcptr))) = fn
 	sigaction(i, &sa, nil)
 }
-
 
 //go:nosplit
 //go:nowritebarrierrec
@@ -289,9 +295,6 @@ func setsigstack(i uint32) {
 func getsig(i uint32) uintptr {
 	var sa sigactiont
 	sigaction(i, nil, &sa)
-	if *((*uintptr)(unsafe.Pointer(&sa._funcptr))) == abi.FuncPCABI0(sigtramp) {
-		return abi.FuncPCABIInternal(sighandler)
-	}
 	return *((*uintptr)(unsafe.Pointer(&sa._funcptr)))
 }
 
@@ -429,11 +432,11 @@ func munmap(addr unsafe.Pointer, n uintptr) {
 	sysvicall2(&libc_munmap, uintptr(addr), uintptr(n))
 }
 
-func nanotime2()
-
 //go:nosplit
 func nanotime1() int64 {
-	return int64(sysvicall0((*libcFunc)(unsafe.Pointer(abi.FuncPCABI0(nanotime2)))))
+	var ts mts
+	sysvicall2(&libc_clock_gettime, _CLOCK_MONOTONIC, uintptr(unsafe.Pointer(&ts)))
+	return ts.tv_sec*1e9 + ts.tv_nsec
 }
 
 //go:nosplit
@@ -502,7 +505,11 @@ func raiseproc(sig uint32) /* int32 */ {
 
 //go:nosplit
 func read(fd int32, buf unsafe.Pointer, nbyte int32) int32 {
-	return int32(sysvicall3(&libc_read, uintptr(fd), uintptr(buf), uintptr(nbyte)))
+	r1, err := sysvicall3Err(&libc_read, uintptr(fd), uintptr(buf), uintptr(nbyte))
+	if c := int32(r1); c >= 0 {
+		return c
+	}
+	return int32(err)
 }
 
 //go:nosplit
@@ -579,7 +586,25 @@ func walltime() (sec int64, nsec int32) {
 
 //go:nosplit
 func write1(fd uintptr, buf unsafe.Pointer, nbyte int32) int32 {
-	return int32(sysvicall3(&libc_write, uintptr(fd), uintptr(buf), uintptr(nbyte)))
+	r1, err := sysvicall3Err(&libc_write, fd, uintptr(buf), uintptr(nbyte))
+	if c := int32(r1); c >= 0 {
+		return c
+	}
+	return int32(err)
+}
+
+//go:nosplit
+func pipe() (r, w int32, errno int32) {
+	var p [2]int32
+	_, e := sysvicall1Err(&libc_pipe, uintptr(noescape(unsafe.Pointer(&p))))
+	return p[0], p[1], int32(e)
+}
+
+//go:nosplit
+func pipe2(flags int32) (r, w int32, errno int32) {
+	var p [2]int32
+	_, e := sysvicall2Err(&libc_pipe2, uintptr(noescape(unsafe.Pointer(&p))), uintptr(flags))
+	return p[0], p[1], int32(e)
 }
 
 func osyield1()

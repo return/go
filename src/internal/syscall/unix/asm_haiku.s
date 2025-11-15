@@ -7,4 +7,4 @@
 // System calls for Haiku are implemented in runtime/syscall_haiku.go
 
 TEXT ·syscall6(SB),NOSPLIT,$0-88
-	JMP	syscall·syscall_sysvicall6(SB)
+	JMP	syscall·sysvicall6(SB)

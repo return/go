@@ -17,7 +17,6 @@ var (
 	libc_gethostname,
 	libc_getpid,
 	libc_ioctl,
-	libc_pipe,
 	libc_setgid,
 	libc_setgroups,
 	libc_setsid,
@@ -211,13 +210,6 @@ func syscall_pipe() (r, w, err uintptr) {
 	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
 	exitsyscall()
 	return call.r1, call.r2, call.err
-}
-
-//go:nosplit
-func pipe() (r, w int32, errno int32) {
-	var p [2]int32
-	_, err := sysvicall1Err(&libc_pipe, uintptr(noescape(unsafe.Pointer(&p[0]))))
-	return p[0], p[1], int32(err)
 }
 
 // This is syscall.RawSyscall, it exists to satisfy some build dependency,
