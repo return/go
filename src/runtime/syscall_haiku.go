@@ -152,6 +152,9 @@ func syscall_forkx(flags uintptr) (pid uintptr, err uintptr) {
 		args: uintptr(unsafe.Pointer(&libc_fork)), // it's unused but must be non-nil, otherwise crashes
 	}
 	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
+	if int(call.r1) != -1 {
+		call.err = 0
+	}
 	return call.r1, call.err
 }
 
@@ -313,6 +316,8 @@ func syscall_wait4(pid uintptr, wstatus *uint32, options uintptr, rusage unsafe.
 	entersyscallblock()
 	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
 	exitsyscall()
+	KeepAlive(wstatus)
+	KeepAlive(rusage)
 	return int(call.r1), call.err
 }
 

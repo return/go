@@ -289,7 +289,7 @@ func UtimesNano(path string, ts []Timespec) error {
 
 // FcntlFlock performs a fcntl syscall for the F_GETLK, F_SETLK or F_SETLKW command.
 func FcntlFlock(fd uintptr, cmd int, lk *Flock_t) error {
-	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_fcntl)), 3, uintptr(fd), uintptr(cmd), uintptr(unsafe.Pointer(lk)), 0, 0, 0)
+	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Fcntl)), 3, uintptr(fd), uintptr(cmd), uintptr(unsafe.Pointer(lk)), 0, 0, 0)
 	if e1 != 0 {
 		return e1
 	}
@@ -338,7 +338,7 @@ func anyToSockaddr(rsa *RawSockaddrAny) (Sockaddr, error) {
 	return nil, EAFNOSUPPORT
 }
 
-//sys	accept(s int, rsa *RawSockaddrAny, addrlen *_Socklen) (fd int, err error) = libsocket.accept
+//sys	accept(s int, rsa *RawSockaddrAny, addrlen *_Socklen) (fd int, err error) = libnetwork.accept
 
 func Accept(fd int) (nfd int, sa Sockaddr, err error) {
 	var rsa RawSockaddrAny
@@ -383,7 +383,7 @@ func recvmsgRaw(fd int, p, oob []byte, flags int, rsa *RawSockaddrAny) (n, oobn 
 	return
 }
 
-//sys	sendmsg(s int, msg *Msghdr, flags int) (n int, err error) = libsocket.sendmsg
+//sys	sendmsg(s int, msg *Msghdr, flags int) (n int, err error) = libnetwork.sendmsg
 
 func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags int) (n int, err error) {
 	var msg Msghdr
@@ -427,12 +427,13 @@ func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags i
 //sys	Close(fd int) (err error)
 //sys	Closedir(dir uintptr) (err error)
 //sys	Dup(fd int) (nfd int, err error)
+//sys	Dup2(old int, new int) (err error)
 //sys	Fchdir(fd int) (err error)
 //sys	Fchmod(fd int, mode uint32) (err error)
 //sys	Fchown(fd int, uid int, gid int) (err error)
 //sys	Fdopendir(fd int) (dir uintptr, err error)
 //sys	Fpathconf(fd int, name int) (val int, err error)
-//sys	Fstat(fd int, stat *Stat_t) (err error)
+//sys	Fstat(fd int, stat *Stat_t) (err error) = libroot.fstat#LIBROOT_1_ALPHA1
 //sysnb	Getgid() (gid int)
 //sysnb	Getpid() (pid int)
 //sys	Geteuid() (euid int)
@@ -445,8 +446,8 @@ func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags i
 //sys	Kill(pid int, signum Signal) (err error)
 //sys	Lchown(path string, uid int, gid int) (err error)
 //sys	Link(path string, link string) (err error)
-//sys	Listen(s int, backlog int) (err error) = libsocket.listen
-//sys	Lstat(path string, stat *Stat_t) (err error)
+//sys	Listen(s int, backlog int) (err error) = libnetwork.listen
+//sys	Lstat(path string, stat *Stat_t) (err error) = libroot.lstat#LIBROOT_1_ALPHA1
 //sys	Mkdir(path string, mode uint32) (err error)
 //sys	Mknod(path string, mode uint32, dev int) (err error)
 //sys	Nanosleep(time *Timespec, leftover *Timespec) (err error)
@@ -471,8 +472,8 @@ func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags i
 //sysnb	Setrlimit(which int, lim *Rlimit) (err error)
 //sysnb	Setsid() (pid int, err error)
 //sysnb	Setuid(uid int) (err error)
-//sys	Shutdown(s int, how int) (err error) = libsocket.shutdown
-//sys	Stat(path string, stat *Stat_t) (err error)
+//sys	Shutdown(s int, how int) (err error) = libnetwork.shutdown
+//sys	Stat(path string, stat *Stat_t) (err error) = libroot.stat#LIBROOT_1_ALPHA1
 //sys	Symlink(path string, link string) (err error)
 //sys	Sync() (err error)
 //sys	Truncate(path string, length int64) (err error)
@@ -480,25 +481,25 @@ func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags i
 //sys	Ftruncate(fd int, length int64) (err error)
 //sys	Umask(newmask int) (oldmask int)
 //sys	Unlink(path string) (err error)
-//sys	utimes(path string, times *[2]Timeval) (err error)
-//sys	bind(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) = libsocket.bind
-//sys	connect(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) = libsocket.connect
+//sys	Utimes(path string, times *[2]Timeval) (err error)
+//sys	bind(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) = libnetwork.bind
+//sys	connect(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) = libnetwork.connect
 //sys	mmap(addr uintptr, length uintptr, prot int, flag int, fd int, pos int64) (ret uintptr, err error)
 //sys	munmap(addr uintptr, length uintptr) (err error)
-//sys	sendto(s int, buf []byte, flags int, to unsafe.Pointer, addrlen _Socklen) (err error) = libsocket.sendto
-//sys	socket(domain int, typ int, proto int) (fd int, err error) = libsocket.socket
-//sysnb	socketpair(domain int, typ int, proto int, fd *[2]int32) (err error) = libsocket.socketpair
+//sys	sendto(s int, buf []byte, flags int, to unsafe.Pointer, addrlen _Socklen) (err error) = libnetwork.sendto
+//sys	socket(domain int, typ int, proto int) (fd int, err error) = libnetwork.socket
+//sysnb	socketpair(domain int, typ int, proto int, fd *[2]int32) (err error) = libnetwork.socketpair
 //sys	write(fd int, p []byte) (n int, err error)
-//sys	getsockopt(s int, level int, name int, val unsafe.Pointer, vallen *_Socklen) (err error) = libsocket.getsockopt
-//sysnb	getpeername(fd int, rsa *RawSockaddrAny, addrlen *_Socklen) (err error) = libsocket.getpeername
-//sys	getsockname(fd int, rsa *RawSockaddrAny, addrlen *_Socklen) (err error) = libsocket.getsockname
-//sys	setsockopt(s int, level int, name int, val unsafe.Pointer, vallen uintptr) (err error) = libsocket.setsockopt
-//sys	recvfrom(fd int, p []byte, flags int, from *RawSockaddrAny, fromlen *_Socklen) (n int, err error) = libsocket.recvfrom
-//sys	recvmsg(s int, msg *Msghdr, flags int) (n int, err error) = libsocket.recvmsg
+//sys	getsockopt(s int, level int, name int, val unsafe.Pointer, vallen *_Socklen) (err error) = libnetwork.getsockopt
+//sysnb	getpeername(fd int, rsa *RawSockaddrAny, addrlen *_Socklen) (err error) = libnetwork.getpeername
+//sys	getsockname(fd int, rsa *RawSockaddrAny, addrlen *_Socklen) (err error) = libnetwork.getsockname
+//sys	setsockopt(s int, level int, name int, val unsafe.Pointer, vallen uintptr) (err error) = libnetwork.setsockopt
+//sys	recvfrom(fd int, p []byte, flags int, from *RawSockaddrAny, fromlen *_Socklen) (n int, err error) = libnetwork.recvfrom
+//sys	recvmsg(s int, msg *Msghdr, flags int) (n int, err error) = libnetwork.recvmsg
 //sys	utimensat(dirfd int, path string, times *[2]Timespec, flag int) (err error)
 
 func readlen(fd int, buf *byte, nbuf int) (n int, err error) {
-	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_read)), 3, uintptr(fd), uintptr(unsafe.Pointer(buf)), uintptr(nbuf), 0, 0, 0)
+	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Read)), 3, uintptr(fd), uintptr(unsafe.Pointer(buf)), uintptr(nbuf), 0, 0, 0)
 	n = int(r0)
 	if e1 != 0 {
 		err = e1
@@ -507,7 +508,7 @@ func readlen(fd int, buf *byte, nbuf int) (n int, err error) {
 }
 
 func writelen(fd int, buf *byte, nbuf int) (n int, err error) {
-	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_write)), 3, uintptr(fd), uintptr(unsafe.Pointer(buf)), uintptr(nbuf), 0, 0, 0)
+	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Write)), 3, uintptr(fd), uintptr(unsafe.Pointer(buf)), uintptr(nbuf), 0, 0, 0)
 	n = int(r0)
 	if e1 != 0 {
 		err = e1

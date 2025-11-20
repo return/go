@@ -84,12 +84,12 @@ while(<>) {
 	# Line must be of the form
 	#	func Open(path string, mode int, perm int) (fd int, err error)
 	# Split into name, in params, out params.
-	if(!/^\/\/sys(nb)? (\w+)\(([^()]*)\)\s*(?:\(([^()]+)\))?\s*(?:=\s*(?:(\w*)\.)?(\w*))?$/) {
+	if(!/^\/\/sys(nb)? (\w+)\(([^()]*)\)\s*(?:\(([^()]+)\))?\s*(?:=\s*(?:(\w*)\.)?(\w*)(#\w+)?)?$/) {
 		print STDERR "$ARGV:$.: malformed //sys declaration\n";
 		$errors = 1;
 		next;
 	}
-	my ($nb, $func, $in, $out, $modname, $sysname) = ($1, $2, $3, $4, $5, $6);
+	my ($nb, $func, $in, $out, $modname, $sysname, $version) = ($1, $2, $3, $4, $5, $6, $7);
 
 	# Split argument lists on comma.
 	my @in = parseparamlist($in);
@@ -106,7 +106,7 @@ while(<>) {
 	}
 
 	# System call pointer variable name.
-	my $sysvarname = "libc_${sysname}";
+	my $sysvarname = "libc_" . ucfirst($sysname);
 
 	my $strconvfunc = "BytePtrFromString";
 	my $strconvtype = "*byte";
@@ -114,7 +114,7 @@ while(<>) {
 	$sysname =~ y/A-Z/a-z/; # All libc functions are lowercase.
 
 	# Runtime import of function to allow cross-platform builds.
-	$dynimports .= "//go:cgo_import_dynamic ${sysvarname} ${sysname} \"$modname.so\"\n";
+	$dynimports .= "//go:cgo_import_dynamic ${sysvarname} ${sysname}${version} \"$modname.so\"\n";
 	# Link symbol to proc address variable.
 	$linknames .= "//go:linkname ${sysvarname} ${sysvarname}\n";
 	# Library proc address variable.
