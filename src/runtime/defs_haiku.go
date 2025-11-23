@@ -2,14 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build ignore
+//go:build ignore
 
 /*
 Input to cgo.
 
 GOARCH=amd64 go tool cgo -cdefs defs_haiku.go >defs_haiku_amd64.h
-GOARCH=386 go tool cgo -cdefs defs_haiku.go >defs_haiku_386.h
-GOARCH=arm go tool cgo -cdefs defs_haiku.go >defs_haiku_arm.h
 */
 
 package runtime
@@ -47,6 +45,7 @@ const (
 	ENOMEM    = C.ENOMEM
 	ETIMEDOUT = C.ETIMEDOUT
 	EACCES    = C.EACCES
+	ENOSYS    = C.ENOSYS
 
 	PROT_NONE  = C.PROT_NONE
 	PROT_READ  = C.PROT_READ
@@ -115,6 +114,7 @@ const (
 	HOST_NAME_MAX = C.HOST_NAME_MAX
 
 	O_NONBLOCK = C.O_NONBLOCK
+	O_CLOEXEC  = C.O_CLOEXEC
 	FD_CLOEXEC = C.FD_CLOEXEC
 	F_GETFL    = C.F_GETFL
 	F_SETFL    = C.F_SETFL
