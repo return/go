@@ -315,6 +315,16 @@ func UtimesNanoAt(dirfd int, path string, ts []Timespec, flags int) error {
 
 //sys	fcntl(fd int, cmd int, arg int) (val int, err error)
 
+// FcntlInt performs a fcntl syscall on fd with the provided command and argument.
+func FcntlInt(fd uintptr, cmd, arg int) (int, error) {
+	valptr, _, errno := sysvicall6(uintptr(unsafe.Pointer(&libc_Fcntl)), 3, uintptr(fd), uintptr(cmd), uintptr(arg), 0, 0, 0)
+	var err error
+	if errno != 0 {
+		err = errno
+	}
+	return int(valptr), err
+}
+
 // FcntlFlock performs a fcntl syscall for the F_GETLK, F_SETLK or F_SETLKW command.
 func FcntlFlock(fd uintptr, cmd int, lk *Flock_t) error {
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Fcntl)), 3, uintptr(fd), uintptr(cmd), uintptr(unsafe.Pointer(lk)), 0, 0, 0)
@@ -399,7 +409,7 @@ func recvmsgRaw(fd int, p, oob []byte, flags int, rsa *RawSockaddrAny) (n, oobn 
 			iov.Base = &dummy
 			iov.SetLen(1)
 		}
-		msg.Control = (*int8)(unsafe.Pointer(&oob[0]))
+		msg.Control = (*byte)(unsafe.Pointer(&oob[0]))
 		msg.Controllen = uint32(len(oob))
 	}
 	msg.Iov = &iov
@@ -429,7 +439,7 @@ func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags i
 			iov.Base = &dummy
 			iov.SetLen(1)
 		}
-		msg.Control = (*int8)(unsafe.Pointer(&oob[0]))
+		msg.Control = (*byte)(unsafe.Pointer(&oob[0]))
 		msg.Controllen = uint32(len(oob))
 	}
 	msg.Iov = &iov
@@ -455,6 +465,14 @@ func ioctl(fd int, req uint, arg uintptr) (err error) {
 	return err
 }
 
+//sys	poll(fds *PollFd, nfds int, timeout int) (n int, err error)
+
+func Poll(fds []PollFd, timeout int) (n int, err error) {
+	if len(fds) == 0 {
+		return poll(nil, 0, timeout)
+	}
+	return poll(&fds[0], len(fds), timeout)
+}
 
 /*
  * Exposed directly
@@ -471,11 +489,14 @@ func ioctl(fd int, req uint, arg uintptr) (err error) {
 //sys	Dup2(old int, new int) (err error)
 //sys	Fchdir(fd int) (err error)
 //sys	Fchmod(fd int, mode uint32) (err error)
+//sys	Fchmodat(dirfd int, path string, mode uint32, flags int) (err error)
 //sys	Fchown(fd int, uid int, gid int) (err error)
 //sys	Fdopendir(fd int) (dir uintptr, err error)
 //sys	Flock(fd int, how int) (err error)
 //sys	Fpathconf(fd int, name int) (val int, err error)
 //sys	Fstat(fd int, stat *Stat_t) (err error) = libroot.fstat#LIBROOT_1_ALPHA1
+//sys	Fstatat(fd int, path string, stat *Stat_t, flags int) (err error)
+//sys	Fstatvfs(fd int, vfsstat *Statvfs_t) (err error)
 //sysnb	Getgid() (gid int)
 //sysnb	Getpid() (pid int)
 //sys	Geteuid() (euid int)
@@ -485,12 +506,13 @@ func ioctl(fd int, req uint, arg uintptr) (err error) {
 //sysnb	Getrlimit(which int, lim *Rlimit) (err error)
 //sysnb	Gettimeofday(tv *Timeval) (err error)
 //sysnb	Getuid() (uid int)
-//sys	Kill(pid int, signum Signal) (err error)
+//sys	Kill(pid int, signum syscall.Signal) (err error)
 //sys	Lchown(path string, uid int, gid int) (err error)
 //sys	Link(path string, link string) (err error)
 //sys	Listen(s int, backlog int) (err error) = libnetwork.listen
 //sys	Lstat(path string, stat *Stat_t) (err error) = libroot.lstat#LIBROOT_1_ALPHA1
 //sys	Mkdir(path string, mode uint32) (err error)
+//sys	Mkfifo(path string, mode uint32) (err error)
 //sys	Mknod(path string, mode uint32, dev int) (err error)
 //sys	Nanosleep(time *Timespec, leftover *Timespec) (err error)
 //sys	Open(path string, mode int, perm uint32) (fd int, err error)
@@ -502,8 +524,10 @@ func ioctl(fd int, req uint, arg uintptr) (err error) {
 //sys	Readdir_r(dir uintptr, entry *Dirent, result **Dirent) (res Errno)
 //sys	Readlink(path string, buf []byte) (n int, err error)
 //sys	Rename(from string, to string) (err error)
+//sys	Renameat(olddirfd int, oldpath string, newdirfd int, newpath string) (err error)
 //sys	Rmdir(path string) (err error)
 //sys	Seek(fd int, offset int64, whence int) (newoffset int64, err error) = lseek
+//sys	Select(nfd int, r *FdSet, w *FdSet, e *FdSet, timeout *Timeval) (n int, err error)
 //sysnb	Setegid(egid int) (err error)
 //sysnb	Seteuid(euid int) (err error)
 //sysnb	Setgid(gid int) (err error)
@@ -522,6 +546,7 @@ func ioctl(fd int, req uint, arg uintptr) (err error) {
 //sys	Fsync(fd int) (err error)
 //sys	Ftruncate(fd int, length int64) (err error)
 //sys	Umask(newmask int) (oldmask int)
+//sysnb	Uname(buf *Utsname) (err error)
 //sys	Unlink(path string) (err error)
 //sys	Utimes(path string, times *[2]Timeval) (err error)
 //sys	bind(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) = libnetwork.bind

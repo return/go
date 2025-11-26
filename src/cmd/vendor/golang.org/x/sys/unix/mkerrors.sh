@@ -780,10 +780,7 @@ main(void)
 		// lowercase first letter: Bad -> bad, but STREAM -> STREAM.
 		if(A <= buf[0] && buf[0] <= Z && a <= buf[1] && buf[1] <= z)
 			buf[0] += a - A;
-'
-		[ "$uname" = "Haiku" ] && echo 'e = e == 0? e: (e & 0x7fffffff) + 1;'
-		echo -E '
-		printf("\t{ %d, \"%s\", \"%s\" },\n", e, errors[i].name, buf);
+		printf("\t{ 0x%x, \"%s\", \"%s\" },\n", e, errors[i].name, buf);
 	}
 	printf("}\n\n");
 
