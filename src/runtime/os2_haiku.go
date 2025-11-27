@@ -6,6 +6,7 @@ package runtime
 
 import (
 	"internal/abi"
+	"runtime/internal/atomic"
 	"unsafe"
 )
 
@@ -374,9 +375,9 @@ func semasleep(ns int64) int32 {
 	return 0
 }
 
-func exitThread(wait *uint32) {
-	// We should never reach exitThread on Solaris because we let
-	// libc clean up threads.
+func exitThread(wait *atomic.Uint32) {
+	// We should never reach exitThread on Haiku because we let
+	// libroot clean up threads.
 	throw("exitThread")
 }
 
